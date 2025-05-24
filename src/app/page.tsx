@@ -1,9 +1,18 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { UploadCloud, Code2, Heart } from 'lucide-react';
+'use client';
+
+import { Code2, Heart } from 'lucide-react';
 import { Chatbot } from "@/components/chatbot";
 import { ReportUploader } from "@/components/report-uploader";
-import { ElevenLabsWidget } from "@/components/elevenlabs-widget";
+import dynamic from 'next/dynamic';
+
+// Dynamically import the ElevenLabs widget with SSR disabled
+const ElevenLabsWidget = dynamic(
+  () => import("@/components/elevenlabs-widget").then(mod => ({ default: mod.ElevenLabsWidget })),
+  { 
+    ssr: false,
+    loading: () => null 
+  }
+);
 
 export default function HomePage() {
   const elevenLabsAgentId = "NCWfAuaPEeKMlselVnSk";

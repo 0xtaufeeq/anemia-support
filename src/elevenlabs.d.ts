@@ -1,13 +1,14 @@
 // src/elevenlabs.d.ts
-declare global {
+import 'react'; // Import React to ensure JSX namespace is correctly augmented
+
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
-      'elevenlabs-convai': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & { 
-        'agent-id'?: string; 
+      'elevenlabs-convai': {
+        'agent-id': string;
       };
     }
   }
 }
 
-// Adding an empty export {} to make it a module, which can sometimes help with global type recognition.
-export {}; 
+export {}; // Ensures this file is treated as a module

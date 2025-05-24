@@ -4,17 +4,10 @@ import { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UploadCloud, FileText, AlertCircle, Loader2 } from 'lucide-react';
-import { useDropzone } from 'react-dropzone';
-import * as pdfjsLib from 'pdfjs-dist';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import ReactMarkdown from 'react-markdown';
 
-// Set workerSrc for pdf.js. This is crucial for it to work in Next.js/webpack environments.
-// Point to the local copy in the public directory.
-pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
-
-interface ReportUploaderProps {}
-
-export const ReportUploader: React.FC<ReportUploaderProps> = () => {
+export const ReportUploader: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,13 +21,20 @@ export const ReportUploader: React.FC<ReportUploaderProps> = () => {
     setInsights(null);
     setExtractedText(null);
     try {
+      // Dynamic import to prevent server-side execution
+      const pdfjsLib = await import('pdfjs-dist');
+      
+      // Set workerSrc for pdf.js. This is crucial for it to work in Next.js/webpack environments.
+      // Point to the local copy in the public directory.
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
+
       const arrayBuffer = await fileToParse.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let textContent = '';
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const text = await page.getTextContent();
-        textContent += text.items.map((s: any) => s.str).join(' ') + '\n'; // Extract text items and join
+        textContent += text.items.map((s) => ('str' in s ? (s as { str: string }).str : '')).join(' ') + '\n'; // Extract text items and join
       }
       if (!textContent.trim()) {
         setError("Could not extract text from PDF. It might be an image-based PDF or empty.");
@@ -53,7 +53,7 @@ export const ReportUploader: React.FC<ReportUploaderProps> = () => {
     }
   };
 
-  const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
     setError(null);
     setInsights(null);
     setExtractedText(null);
@@ -120,9 +120,13 @@ export const ReportUploader: React.FC<ReportUploaderProps> = () => {
       }
       
       setInsights(result.insights);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Analysis error:", err);
-      setError(err.message || 'An error occurred during analysis.');
+      if (err instanceof Error) {
+        setError(err.message || 'An error occurred during analysis.');
+      } else {
+        setError('An unexpected error occurred during analysis.');
+      }
     } finally {
       setIsLoading(false);
     }

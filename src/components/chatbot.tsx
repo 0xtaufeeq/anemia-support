@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Languages, MessageCircle, Send } from "lucide-react";
+import { MessageCircle, Send } from "lucide-react";
 
 interface Message {
   id: string;
